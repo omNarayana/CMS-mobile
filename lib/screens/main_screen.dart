@@ -21,75 +21,6 @@ class MainScreen extends ConsumerWidget {
       const ProfileScreen(),
       // const FeesScreen(),
     ];
-
-    // return Scaffold(
-    //   backgroundColor: Colors.white,
-    //   // appBar: AppBar(
-    //   //   backgroundColor: Colors.red,
-    //   //   title: const Text('IF YOU SEE THIS RED BAR, MAIN_SCREEN IS ACTIVE'),
-    //   // ),
-    //   body: IndexedStack(
-    //     index: selectedIndex,
-    //     children: screens,
-    //   ),
-    //
-    //   bottomNavigationBar: Container(
-    //     decoration: BoxDecoration(
-    //       border: Border(
-    //         top: BorderSide(
-    //           color: Colors.grey.shade200,
-    //           width: 1,
-    //         ),
-    //       ),
-    //     ),
-    //
-    //     child: NavigationBar(
-    //       backgroundColor: Colors.white,
-    //       elevation: 0,
-    //
-    //       selectedIndex: selectedIndex,
-    //
-    //       labelBehavior:
-    //       NavigationDestinationLabelBehavior.alwaysShow,
-    //
-    //       onDestinationSelected: (index) {
-    //         debugPrint('==============================');
-    //         debugPrint('Navigation Destination Selected');
-    //         debugPrint('Index: $index');
-    //
-    //         if (index == 0) {
-    //           debugPrint('Screen: Home');
-    //         } else if (index == 1) {
-    //           debugPrint('Screen: Profile');
-    //         }
-    //
-    //         debugPrint('==============================');
-    //
-    //         ref.read(selectedTabProvider.notifier).state = index;
-    //       },
-    //
-    //       destinations: const [
-    //         NavigationDestination(
-    //           icon: Icon(Icons.dashboard_outlined),
-    //           selectedIcon: Icon(
-    //             Icons.dashboard,
-    //             color: Colors.blue,
-    //           ),
-    //           label: 'Home',
-    //         ),
-    //
-    //         NavigationDestination(
-    //           icon: Icon(Icons.person_outline),
-    //           selectedIcon: Icon(
-    //             Icons.person,
-    //             color: Colors.blue,
-    //           ),
-    //           label: 'Profile',
-    //         ),
-    //       ],
-    //     ),
-    //   ),
-    // );
     return Scaffold(
       body: IndexedStack(
         index: selectedIndex,
@@ -122,3 +53,84 @@ class MainScreen extends ConsumerWidget {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// return Scaffold(
+//   backgroundColor: Colors.white,
+//   // appBar: AppBar(
+//   //   backgroundColor: Colors.red,
+//   //   title: const Text('IF YOU SEE THIS RED BAR, MAIN_SCREEN IS ACTIVE'),
+//   // ),
+//   body: IndexedStack(
+//     index: selectedIndex,
+//     children: screens,
+//   ),
+//
+//   bottomNavigationBar: Container(
+//     decoration: BoxDecoration(
+//       border: Border(
+//         top: BorderSide(
+//           color: Colors.grey.shade200,
+//           width: 1,
+//         ),
+//       ),
+//     ),
+//
+//     child: NavigationBar(
+//       backgroundColor: Colors.white,
+//       elevation: 0,
+//
+//       selectedIndex: selectedIndex,
+//
+//       labelBehavior:
+//       NavigationDestinationLabelBehavior.alwaysShow,
+//
+//       onDestinationSelected: (index) {
+//         debugPrint('==============================');
+//         debugPrint('Navigation Destination Selected');
+//         debugPrint('Index: $index');
+//
+//         if (index == 0) {
+//           debugPrint('Screen: Home');
+//         } else if (index == 1) {
+//           debugPrint('Screen: Profile');
+//         }
+//
+//         debugPrint('==============================');
+//
+//         ref.read(selectedTabProvider.notifier).state = index;
+//       },
+//
+//       destinations: const [
+//         NavigationDestination(
+//           icon: Icon(Icons.dashboard_outlined),
+//           selectedIcon: Icon(
+//             Icons.dashboard,
+//             color: Colors.blue,
+//           ),
+//           label: 'Home',
+//         ),
+//
+//         NavigationDestination(
+//           icon: Icon(Icons.person_outline),
+//           selectedIcon: Icon(
+//             Icons.person,
+//             color: Colors.blue,
+//           ),
+//           label: 'Profile',
+//         ),
+//       ],
+//     ),
+//   ),
+// );

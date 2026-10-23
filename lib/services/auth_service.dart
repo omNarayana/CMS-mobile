@@ -25,6 +25,44 @@ class ApiService {
       rethrow;
     }
   }
+
+
+  /// Authenticates the user and saves the token
+  Future<void> login(String email, String password) async {
+    try {
+      final response = await _dio.post(
+        '/v1/user/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+
+      // Extract the token based on your backend structure
+      // Based on your logs, it's response.data["data"]["token"]
+      final token = response.data['data']?['token'];
+      final refreshToken = response.data['data']?['refreshToken'];
+
+      if (token != null) {
+        await TokenStorage.saveToken(token);
+
+        // Save refresh token if your backend provides one for silent renewal
+        if (refreshToken != null) {
+          await TokenStorage.saveRefreshToken(refreshToken);
+        }
+      } else {
+        throw Exception("Login successful but no token received");
+      }
+    } on DioException catch (e) {
+      // Extract the backend error message if available
+      final message = e.response?.data['message'] ?? "Login failed";
+      throw Exception(message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+
   /// Logs out the user by notifying the backend and clearing local storage
   Future<void> logout() async {
     try {

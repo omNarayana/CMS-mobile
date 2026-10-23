@@ -1,65 +1,116 @@
+// lib/services/academic_service.dart
 import 'package:dio/dio.dart';
+import '../core/network/dio_client.dart'; // Or your Dio instance with ApiInterceptors
 import '../models/academic_model.dart';
-import '../core/network/dio_client.dart';
 
 class AcademicApiService {
-  // Use the pre-configured Dio instance
-  final Dio _dio = DioClient.dio;
+  final Dio _dio = DioClient.dio; // Use your configured Dio instance
 
   Future<AcademicDashboardData> fetchAcademicData() async {
     try {
-      // Dio combines this with "https://192.168.31.63:5005" automatically
-      final response = await _dio.get('/v1/student/portal/subjects');
-
-      // Dio handles JSON decoding automatically
-      final payload = response.data['data'] ?? response.data;
-      final baseData = AcademicDashboardData.fromJson(payload);
-
-      // Concurrent fetching for performance
-      final results = await Future.wait([
-        fetchFacultyList(),
-        fetchEnrollmentHistory(),
+      // 1. Fetch Subjects, Faculty, and History concurrently
+      final responses = await Future.wait([
+        _dio.get('/student/portal/subjects'),
+        _dio.get('/student/portal/faculty'),
+        _dio.get('/student/portal/enrollments'),
       ]);
 
+      final subjectsRes = responses[0].data;
+      final facultyRes = responses[1].data;
+      final enrollmentsRes = responses[2].data;
+
+      final subjectsData = (subjectsRes['data'] as Map<String, dynamic>?) ?? {};
+      final facultyList = (facultyRes['data'] as List<dynamic>?) ?? [];
+      final enrollmentsList = (enrollmentsRes['data'] as List<dynamic>?) ?? [];
+
+      // 2. Parse Faculty Members
+      final facultyMembers = facultyList
+          .map((f) => FacultyInstructor.fromJson(f as Map<String, dynamic>))
+          .toList();
+
+      // 3. Parse Enrollment History
+      final enrollmentHistory = enrollmentsList
+          .map((e) => EnrollmentRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      // 4. Parse base data from /subjects payload
+      final dashboard = AcademicDashboardData.fromJson(subjectsData);
+
+      // 5. Construct complete AcademicDashboardData with electiveBaskets forwarded
       return AcademicDashboardData(
-        student: baseData.student,
-        activeEnrollment: baseData.activeEnrollment,
-        curriculum: baseData.curriculum,
-        termSubjects: baseData.termSubjects,
-        totalCredits: baseData.totalCredits,
-        cgpa: baseData.cgpa,
-        overallAttendance: baseData.overallAttendance,
-        enrollmentHistory: results[1] as List<EnrollmentRecord>,
-        facultyMembers: results[0] as List<FacultyInstructor>,
+        student: dashboard.student,
+        activeEnrollment: dashboard.activeEnrollment,
+        curriculum: dashboard.curriculum,
+        termSubjects: dashboard.termSubjects,
+        electiveBaskets: dashboard.electiveBaskets,
+        totalCredits: dashboard.totalCredits,
+        cgpa: dashboard.cgpa,
+        overallAttendance: dashboard.overallAttendance,
+        facultyMembers: facultyMembers,
+        enrollmentHistory: enrollmentHistory,
       );
     } on DioException catch (e) {
-      throw _handleError(e);
+      final msg = e.response?.data?['message'] ?? 'Failed to load academic data (${e.type})';
+      throw Exception(msg);
     }
   }
 
-  Future<List<FacultyInstructor>> fetchFacultyList() async {
+  /// Batch submit all selected elective subjects in one call
+  Future<void> selectElectivesBatch({
+    required String registrationId,
+    required List<Map<String, dynamic>> subjects,
+  }) async {
     try {
-      final response = await _dio.get('/student/portal/faculty');
-      final list = (response.data['data'] as List<dynamic>?) ?? [];
-      return list.map((item) => FacultyInstructor.fromJson(item)).toList();
-    } catch (_) {
-      return [];
+      await _dio.post(
+        '/v1/academic/semester-registration/$registrationId/subjects',
+        data: {'subjects': subjects},
+      );
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Failed to add elective subjects';
+      throw Exception(msg);
     }
   }
 
-  Future<List<EnrollmentRecord>> fetchEnrollmentHistory() async {
+  /// Single elective subject selection helper
+  Future<void> selectElectiveSubject({
+    required String registrationId,
+    required String subjectId,
+    required String electiveBasketId,
+  }) async {
     try {
-      final response = await _dio.get('/student/portal/enrollments');
-      final list = (response.data['data'] as List<dynamic>?) ?? [];
-      return list.map((item) => EnrollmentRecord.fromJson(item)).toList();
-    } catch (_) {
-      return [];
+      await _dio.post(
+        '/v1/academic/semester-registration/$registrationId/subjects',
+        data: {
+          'subjects': [
+            {
+              'subject': subjectId,
+              'elective_basket_id': electiveBasketId,
+              'selection_type': 'ELECTIVE',
+            }
+          ]
+        },
+      );
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Failed to select elective';
+      throw Exception(msg);
     }
   }
 
-  Exception _handleError(DioException e) {
-    // Access error messages sent by your backend
-    final message = e.response?.data?['message'] ?? 'Connection error: ${e.type}';
-    return Exception(message);
+  /// Finalize and submit the term registration for approval
+  Future<void> submitRegistration({
+    required String registrationId,
+    String? remarks,
+  }) async {
+    try {
+      await _dio.post(
+        '/v1/academic/semester-registration/$registrationId/submit',
+        data: {
+          'student_remarks': remarks ?? 'Electives selected via Student Portal App',
+        },
+      );
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Failed to submit registration';
+      throw Exception(msg);
+    }
   }
 }
